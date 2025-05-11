@@ -1,10 +1,11 @@
-﻿using UnityEngine;
+﻿using UnityEditor;
+using UnityEngine;
 
 namespace StackDefender.Block
 {
     public class TowerBlock : MonoBehaviour
     {
-        public static float BlockGravity = 1.0f;
+        public float BlockGravity = 10.0f;
 
         [HideInInspector]
         public Vector2Int gridPos = new Vector2Int(-1, -1);
@@ -16,14 +17,14 @@ namespace StackDefender.Block
         bool isFalling = false;
         Vector3 landingPos;
 
-        public void Update()
+        public void FixedUpdate()
         {
             if (gridPos.x < 0 || gridPos.y < 0 || stackAncherObject == null) return;
 
             if (isFalling)
             {
                 dropVelocity += BlockGravity * Time.deltaTime;
-                Vector3 newPos = transform.position + new Vector3(0.0f, dropVelocity * Time.deltaTime, 0.0f);
+                Vector3 newPos = transform.position + new Vector3(0.0f, -dropVelocity * Time.deltaTime, 0.0f);
 
                 if (newPos.y < landingPos.y)
                 {
@@ -44,8 +45,8 @@ namespace StackDefender.Block
             Vector3 targetPos = stackController.GridPosToWorldspace(gridPos.x, gridPos.y);
 
             landingPos = targetPos;
-            landingPos.y = transform.position.y;
-            transform.position = landingPos;
+            targetPos.y = transform.position.y;
+            transform.position = targetPos;
             isFalling = true;
         }
     }

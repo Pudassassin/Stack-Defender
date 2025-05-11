@@ -1,3 +1,5 @@
+using StackDefender.Block;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -16,18 +18,43 @@ public class TowerStackController : MonoBehaviour
 
     int hoverColumn = 0;
 
+    // [left >>> right] [bottom >>> top]
+    // List<List<GameObject>> towerColumns;
+    GameObject[,] towerGrid;
+
     // [HideInInspector]
     public GameObject objectToPlace;
+
     public GameObject topCursorObject;
+    public GameObject topCursorInvalidObject;
+    public GameObject placeCursorObject;
 
     PlayerInput playerInput;
     InputAction PI_selectTarget, PI_moveCursor;
+
+    bool targetHold;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         PI_selectTarget = InputSystem.actions.FindAction("Select Target");
         PI_moveCursor = InputSystem.actions.FindAction("Position Cursor");
+
+        towerGrid = new GameObject[gridColumn, gridRow];
+        for (int x = 0; x < gridColumn; x++)
+        {
+            for (int y = 0; y < gridRow; y++)
+            {
+                towerGrid[x, y] = null;
+            }
+        }
+
+        // towerColumns = new List<List<GameObject>>();
+        // for (int column = 0; column < gridColumn; column++)
+        // {
+        //     towerColumns.Add(new List<GameObject>());
+        // }
+
         // gridColumn = StartingGridColumn;
         // gridRow = StartingGirdRow;
     }
@@ -37,12 +64,15 @@ public class TowerStackController : MonoBehaviour
     {
         MouseHoverOnColumn();
         UpdateCursors();
+
+        MousePlaceBlock();
     }
 
     public void MouseHoverOnColumn()
     {
         Camera camera = Camera.main;
-        Vector3 pointerPos = camera.ScreenToWorldPoint(Input.mousePosition);
+        Vector2 mousePos = PI_moveCursor.ReadValue<Vector2>();
+        Vector3 pointerPos = camera.ScreenToWorldPoint(mousePos);
 
         if (pointerPos.x < transform.position.x)
         {
@@ -60,9 +90,23 @@ public class TowerStackController : MonoBehaviour
 
     public void MousePlaceBlock()
     {
-        if (playerInput.)
+        if (PI_selectTarget.IsPressed())
         {
+            if (!targetHold)
+            {
+                // trigger once per click
+                //if (towerColumns[hoverColumn].Count < gridRow)
+                if (gridRow - GetStackHeight(hoverColumn) > 0)
+                {
+                    SpawnAndDropBlock();
+                }
 
+                targetHold = true;
+            }
+        }
+        else
+        {
+            targetHold = false;
         }
     }
 
@@ -70,9 +114,49 @@ public class TowerStackController : MonoBehaviour
     {
         // top cursor
         Vector3 newTopPos = transform.position;
+        GameObject currentCursor;
         newTopPos.y += BlockSize * (gridRow + 1.0f);
         newTopPos.x += BlockSize * (hoverColumn + 0.5f);
-        topCursorObject.transform.position = newTopPos;
+        placeCursorObject.transform.position = GridPosToWorldspace(hoverColumn, GetStackHeight(hoverColumn));
+
+        if (GetStackHeight(hoverColumn) >= gridRow)
+        {
+            // stack is full
+            topCursorObject.SetActive(false);
+            topCursorInvalidObject.SetActive(true);
+            placeCursorObject.SetActive(false);
+
+            currentCursor = topCursorInvalidObject;
+        }
+        else
+        {
+            // stack has room
+            topCursorObject.SetActive(true);
+            topCursorInvalidObject.SetActive(false);
+            placeCursorObject.SetActive(true);
+
+            currentCursor = topCursorObject;
+        }
+
+        currentCursor.transform.position = newTopPos;
+    }
+
+    public GameObject SpawnAndDropBlock()
+    {
+        GameObject blockObject = GameObject.Instantiate(objectToPlace);
+        blockObject.transform.position = topCursorObject.transform.position;
+
+        TowerBlock towerBlock = blockObject.GetComponent<TowerBlock>();
+        towerBlock.stackAncherObject = this.gameObject;
+        // towerBlock.gridPos = new Vector2Int(hoverColumn, towerColumns[hoverColumn].Count);
+        Vector2Int gridPos = new Vector2Int(hoverColumn, GetStackHeight(hoverColumn));
+        towerBlock.gridPos = gridPos;
+        towerBlock.TriggerFall();
+
+        // towerColumns[hoverColumn].Add(blockObject);
+        towerGrid[gridPos.x, gridPos.y] = blockObject;
+
+        return blockObject;
     }
 
     public Vector3 GridPosToWorldspace(int column, int row, bool center = true)
@@ -84,6 +168,19 @@ public class TowerStackController : MonoBehaviour
         if (center)
         {
             result += new Vector3(BlockSize * 0.5f, BlockSize * 0.5f, 0.0f);
+        }
+
+        return result;
+    }
+
+    public int GetStackHeight(int column)
+    {
+        int result = 0;
+
+        for (; result < gridRow; result++)
+        {
+            if (result >= gridRow) break;
+            else if (towerGrid[hoverColumn, result] == null) break;
         }
 
         return result;
