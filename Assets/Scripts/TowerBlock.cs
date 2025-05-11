@@ -17,6 +17,8 @@ namespace StackDefender.Block
         bool isFalling = false;
         Vector3 landingPos;
 
+        public GameObject weaponObject;
+
         public void FixedUpdate()
         {
             if (gridPos.x < 0 || gridPos.y < 0 || stackAncherObject == null) return;
@@ -30,7 +32,10 @@ namespace StackDefender.Block
                 {
                     newPos.y = landingPos.y;
                     isFalling = false;
+
                     // trigger landing effects
+                    weaponObject.SetActive(true);
+
                 }
 
                 transform.position = newPos;
@@ -40,6 +45,9 @@ namespace StackDefender.Block
         public void TriggerFall()
         {
             if (gridPos.x < 0 || gridPos.y < 0 || stackAncherObject == null) return;
+
+            // trigger falling effects
+            weaponObject.SetActive(false);
 
             TowerStackController stackController = stackAncherObject.GetComponent<TowerStackController>();
             Vector3 targetPos = stackController.GridPosToWorldspace(gridPos.x, gridPos.y);
