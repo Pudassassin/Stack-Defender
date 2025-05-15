@@ -12,7 +12,7 @@ TagManager:
   - 
   - Water
   - UI
-  - 
+  - Projectile
   - 
   - 
   - 
@@ -39,8 +39,14 @@ TagManager:
   - 
   - 
   m_SortingLayers:
+  - name: Background
+    uniqueID: 2466248501
+    locked: 0
   - name: Default
     uniqueID: 0
+    locked: 0
+  - name: AttackVFX
+    uniqueID: 830886771
     locked: 0
   m_RenderingLayers:
   - Default

@@ -13,7 +13,13 @@ namespace StackDefender.Weapon
             windupTime,
 
             splashRadius = 10,
-            splashDamageMul
+            splashDamageMul,
+
+            projectileSpeed = 20,
+            projectileAcc,
+            projectileGravity,
+            projectilePierce,
+            projectileChain
 
         }
 
@@ -57,11 +63,13 @@ namespace StackDefender.Weapon
             }
         }
 
-        public GameObject projectilePrefab;
+        public GameObject attackPrefab;
         public float damage = 5.0f;
         public float attackRate = 2.0f;
         public float weaponRange = 3.5f;
         public TargetPriority targetPriority = TargetPriority.front;
+
+        List<GameObject> targets;
 
         public float attackCooldown
         {
@@ -95,13 +103,17 @@ namespace StackDefender.Weapon
             if (weaponTimer > attackCooldown)
             {
                 // enable targetting
-                List<GameObject> targetObjects = AcquireTarget();
-                if (targetObjects.Count >= 1)
+                targets = AcquireTarget();
+                if (targets.Count >= 1)
                 {
                     // temp measure
-                    // Attack();
-                    Debug.Log(targetObjects[0]);
+                    Attack();
+                    // Debug.Log(targetObjects[0]);
                     weaponTimer -= attackCooldown;
+                }
+                else
+                {
+                    weaponTimer = attackCooldown;
                 }
             }
         }
@@ -141,10 +153,20 @@ namespace StackDefender.Weapon
 
         public void Attack()
         {
-            GameObject projectile = Instantiate(projectilePrefab);
-            projectile.transform.position = transform.position;
+            GameObject attackObj = Instantiate(attackPrefab);
+            attackObj.transform.position = transform.position;
 
+            AttackDataObject attackData = attackObj.GetComponent<AttackDataObject>();
+            attackData.intendedTargets = targets;
+            attackData.damage = damage;
 
+            // temp -- typical straight shot projectile
+            if (attackObj.GetComponent<ProjectileMover>())
+            {
+                ProjectileMover mover = attackObj.GetComponent<ProjectileMover>();
+                Vector3 direction = (targets[0].transform.position - transform.position).normalized;
+                mover.velocity = direction * ReadStats(Stats.projectileSpeed);
+            }
         }
 
         private void OnEnable()
@@ -153,6 +175,20 @@ namespace StackDefender.Weapon
         }
 
         // comparation delegate
+        public float ReadStats(Stats stats)
+        {
+            foreach (var item in statsList)
+            {
+                if (item.stats == stats)
+                {
+                    return item.value;
+                }
+            }
+
+            Debug.LogWarning("Stats is missing: " + gameObject.name + " - " + stats.ToString());
+            return 0.1f;
+        }
+
         public static int CompareFirstToCastle(GameObject objectA, GameObject objectB)
         {
             if (objectA == null)

@@ -239,9 +239,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 071337f546e6a6447b89ae92502bc7c4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  projectilePrefab: {fileID: 0}
+  attackPrefab: {fileID: 4660798676129844187, guid: 82174a54e3db15346b6db9565b8a9903,
+    type: 3}
   damage: 5
-  attackRate: 2
+  attackRate: 1.5
   weaponRange: 3.5
   targetPriority: 0
-  statsList: []
+  statsList:
+  - stats: 20
+    value: 8.88
